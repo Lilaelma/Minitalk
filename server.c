@@ -1,69 +1,47 @@
+#include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include "minitalk.h"
 
-void ft_putchar(char c)
+void	ft_receve(int signal, siginfo_t *info, void *context)
 {
-	write(1, &c, 1);
+	static char	*str = NULL;
+	static int	c = 0;
+	static int	n = 7;
+
+	(void)context;
+	c += (signal == SIGUSR1) << n--;
+	if (n == -1)
+	{
+		str = ft_strjoin(str, c);
+		if (!str)
+			exit(1);
+		if (c == '\0')
+		{
+			write(1, str, ft_strlen(str));
+			write(1, "\n", 1);
+			free(str);
+			str = NULL;
+			kill(info->si_pid, SIGUSR2);
+		}
+		c = 0;
+		n = 7;
+	}
+	kill(info->si_pid, SIGUSR1);
 }
 
-void ft_putstr(char *str)
+int	main(void)
 {
-	while (*str)
-	{
-		write(1, str, 1);
-		str++;
-	}
-}
+	struct sigaction	data;
 
-void	ft_putnbr(int nb)
-{
-	if (nb < 0)
-	{
-		nb = -nb;
-	}
-	if (nb >= 10)
-	{
-		ft_putnbr(nb / 10);
-		ft_putnbr(nb % 10);
-	}
-	else
-		ft_putchar(nb + '0');
-}
-
-void	ft_btoa(int sig)
-{
-	static int	bit;
-	static int	i;
-
-	if (sig == SIGUSR1)
-		i |= (0x01 << bit);
-	bit++;
-	if (bit == 8)
-	{
-		ft_putchar(i);
-		bit = 0;
-		i = 0;
-	}
-}
-
-int	main(int argc, char **argv)
-{
-	int	pid;
-
-	(void)argv;
-	if (argc != 1)
-	{
-		ft_putstr("Error\n");
-		return (1);
-	}
-	pid = getpid();
-	ft_putnbr(pid);
-	ft_putstr("\n");
-	while (argc == 1)
-	{
-		signal(SIGUSR1, ft_btoa);
-		signal(SIGUSR2, ft_btoa);
-		pause();
-	}
-	return (0);
+	sigemptyset(&data.sa_mask);
+	data.sa_flags = SA_SIGINFO;
+	data.sa_sigaction = ft_receve;
+	write(1, "PID : ", 6);
+	ft_putnbr(getpid());
+	write(1, "\n", 1);
+	sigaction(SIGUSR1, &data, 0);
+	sigaction(SIGUSR2, &data, 0);
+	while (1)
+		;
 }

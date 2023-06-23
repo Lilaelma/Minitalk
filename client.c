@@ -1,85 +1,58 @@
-#include <unistd.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "minitalk.h"
 
-void ft_putchar(char c)
+int	g_temp;
+
+void	handle(int signal)
 {
-	write(1, &c, 1);
+	if (signal == SIGUSR1)
+		g_temp = 0;
+	if (signal == SIGUSR2)
+	{
+		write(1, "OK\n", 2);
+		exit(0);
+	}
 }
 
-void ft_putstr(char *str)
+void	ft_send(int pid, char c)
 {
 	int	i;
 
-	i = 0;
-	while (str[i])
+	i = 7;
+	while (i + 1)
 	{
-		ft_putchar(str[i]);
-		i++;
-	}
-}
-
-static int	ft_atoi(const char *str)
-{
-	int					i;
-	int					sign;
-	unsigned long int	result;
-
-	i = 0;
-	sign = 1;
-	result = 0;
-	while (str[i] == 32 || (str[i] >= 9 && str[i] <= 13))
-		i++;
-	if (str[i] == '-')
-	{
-		sign = -1;
-		i++;
-	}
-	else if (str[i] == '+')
-		i++;
-	while (str[i] >= '0' && str[i] <= '9')
-	{
-		result *= 10;
-		result += str[i] - '0';
-		i++;
-	}
-	return (result * sign);
-}
-
-void	ft_atob(int pid, char c)
-{
-	int	bit;
-
-	bit = 0;
-	while (bit < 8)
-	{
-		if ((c & (0x01 << bit)))
+		if (c >> i & 1)
 			kill(pid, SIGUSR1);
 		else
 			kill(pid, SIGUSR2);
-		usleep(500);
-		bit++;
+		while (g_temp)
+			;
+		g_temp = 1;
+		i--;
 	}
 }
 
-int	main(int argc, char **argv)
+int	main(int ac, char **av)
 {
 	int	pid;
 	int	i;
 
-	i = 0;
-	if (argc == 3)
-	{
-		pid = ft_atoi(argv[1]);
-		while (argv[2][i] != '\0')
-		{
-			ft_atob(pid, argv[2][i]);
-			i++;
-		}
-	}
-	else
-	{
-		ft_putstr("Error\n");
+	if (ac != 3)
 		return (1);
+	pid = ft_atoi(av[1]);
+	if (pid <= 0)
+		return (1);
+	signal(SIGUSR1, handle);
+	signal(SIGUSR2, handle);
+	g_temp = 1;
+	i = 0;
+	while (av[2][i])
+	{
+		ft_send(pid, av[2][i]);
+		i++;
 	}
+	ft_send(pid, '\0');
 	return (0);
 }

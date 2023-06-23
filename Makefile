@@ -1,8 +1,8 @@
 NAME_C = client
 NAME_S = server
 
-SRC_C = client.c
-SRC_S = server.c
+SRC_C = client.c utils.c
+SRC_S = server.c utils.c
 
 OBJ_C = ${SRC_C:.c=.o}
 OBJ_S = ${SRC_S:.c=.o}
