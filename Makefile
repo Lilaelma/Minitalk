@@ -6,9 +6,10 @@ SRC_S = server.c utils.c
 
 OBJ_C = ${SRC_C:.c=.o}
 OBJ_S = ${SRC_S:.c=.o}
+DEPS = ${SRC_C:.c=.d}
 
-CC = gcc
-CFLAGS = -Wall -Werror -Wextra
+CC = cc
+CFLAGS = -Wall -Werror -Wextra -MMD -MP
 RM = rm -rf
 
 all: $(NAME_C) $(NAME_S)
@@ -30,3 +31,5 @@ fclean: clean
 re: fclean all
 
 .PHONY:		all clean fclean re
+
+-include :$(DEPS)
